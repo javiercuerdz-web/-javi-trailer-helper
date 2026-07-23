@@ -7,13 +7,14 @@
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-192.png"><link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<header><div><h1>Javi Trailer Helper</h1><p>Trailer info and daily work list</p></div><span class="version">v7.0.0</span></header>
+<header><div><h1>Javi Trailer Helper</h1><p>Trailer info, work list, and repair time</p></div><span class="version">v8.0.0</span></header>
 <main>
 <section class="stats"><div><b id="totalCount">0</b><small>Trailers</small></div><div><b id="doneCount">0</b><small>Completed</small></div><div><b id="openCount">0</b><small>Open</small></div></section>
 <nav><button class="tab active" data-view="trailers">Trailers</button><button class="tab" data-view="work">Work List</button></nav>
 <section id="trailers" class="view active">
 <input id="search" placeholder="Search trailer or last 6 VIN">
-<button id="addTrailer" class="primary full">Add Trailer</button>
+<div class="topActions"><button id="addTrailer" class="primary">Add Trailer</button><button id="copyNA" class="secondary">Copy NA</button></div>
+<p class="hint centerHint">Tap any trailer number, VIN, IMEI, or sensor serial number to copy it.</p>
 <div id="trailerList"></div><p id="noTrailers" class="empty">No trailers found.</p>
 </section>
 <section id="work" class="view">
@@ -21,7 +22,7 @@
 <div id="workList"></div><p id="noWork" class="empty">Work list is empty.</p>
 </section>
 </main>
-<footer>Javi Trailer Helper · v7.0.0</footer>
+<footer>Javi Trailer Helper · v8.0.0</footer>
 
 <dialog id="trailerDialog"><form id="trailerForm"><div class="dialogHead"><h2 id="dialogTitle">Add Trailer</h2><button type="button" id="closeDialog">×</button></div><input type="hidden" id="editId">
 <div class="pasteBox"><h3>Paste From ChatGPT</h3><textarea id="pasteData" rows="14" placeholder="Trailer ID\n\nVIN: 123456\nIMEI:\n\nDoor:\nCamera:\nATIS:\nRegulator:\nAir Tank:\n\nLFO:\nLFI:\nRFI:\nRFO:\nLRO:\nLRI:\nRRI:\nRRO:"></textarea><button type="button" id="autoFill" class="secondary full">Auto Fill</button></div>
@@ -29,7 +30,13 @@
 <label>VIN — last 6 only<input id="vin6" maxlength="6" autocapitalize="characters"></label>
 <label>IMEI<input id="imei" inputmode="numeric"></label>
 <h3>Sensors</h3><div id="sensorInputs"></div>
-<label class="statusLabel">Status<select id="status"><option value="open">Open</option><option value="completed">Completed</option></select></label>
 <div class="actions"><button type="button" id="deleteTrailer" class="danger">Delete</button><button type="submit" class="primary">Save Trailer</button></div>
+</form></dialog>
+
+<dialog id="completeDialog"><form id="completeForm"><div class="dialogHead"><div><h2>Complete Trailer</h2><p id="completeTrailerNumber" class="meta"></p></div><button type="button" id="closeComplete">×</button></div><input type="hidden" id="completeId">
+<p class="hint">Select every service completed. The total time updates automatically.</p>
+<div id="servicePicker" class="serviceList"></div>
+<div class="timeTotal"><span>Total estimated repair time</span><strong id="timeTotal">0 mins</strong></div>
+<div class="actions"><button type="button" id="reopenTrailer" class="secondary hidden">Mark Open</button><button type="submit" class="primary">Save as Completed</button></div>
 </form></dialog>
 <div id="toast"></div><script src="app.js"></script></body></html>

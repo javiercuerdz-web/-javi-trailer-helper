@@ -1,2 +1,4 @@
-Javi Trailer Helper v7.0.0
-Upload index.html, app.js, styles.css, manifest.json, service-worker.js, version.json, icon-192.png, and icon-512.png to the root of your GitHub repository.
+Javi Trailer Helper v8.0.0
+
+Upload all files in this folder to the root of the GitHub repository.
+Newest trailers stay at the top. Existing v7 data is migrated automatically.
