@@ -1,4 +1,2 @@
-Javi Trailer Helper v8.0.0
-
-Upload all files in this folder to the root of the GitHub repository.
-Newest trailers stay at the top. Existing v7 data is migrated automatically.
+Javi Trailer Helper v9.0.0
+Daily 540-minute goal tracker added. Upload all files to the GitHub repository root and replace the existing files.
