@@ -7,19 +7,18 @@
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-192.png"><link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<header><div><h1>Javi Trailer Helper</h1><p>Trailer information and repair time</p></div><span class="version">v9.3.0</span></header>
+<header><div><h1>Javi Trailer Helper</h1><p>Trailer information and repair time</p></div><span class="version">v9.5.0</span></header>
 <main>
 <section class="stats"><div><b id="totalCount">0</b><small>Trailers</small></div><div><b id="doneCount">0</b><small>Completed</small></div><div><b id="openCount">0</b><small>Open</small></div></section>
 <section id="dailyGoal" class="dailyGoal"><div class="goalTop"><div><small>Today's repair-time goal</small><strong><span id="todayMinutes">0</span> / 540 mins</strong></div><span id="goalPercent" class="goalPercent">0%</span></div><div class="progressTrack"><div id="goalProgress" class="progressFill"></div></div><p id="goalMessage">540 mins remaining</p></section>
 <section id="trailers" class="view active">
 <input id="search" placeholder="Search trailer or last 6 VIN">
-<div class="topActions"><button id="addTrailer" class="primary">Add Trailer</button><button id="copyNA" class="secondary">Copy NA</button></div>
+<div class="topActions threeActions"><button id="addTrailer" class="primary">Add Trailer</button><button id="copyNA" class="secondary">Copy NA</button><button id="manageNotes" class="secondary">Common Notes</button></div>
 <p class="hint centerHint">Tap any trailer number, VIN, IMEI, or sensor serial number to copy it.</p>
 <div id="trailerList"></div><p id="noTrailers" class="empty">No trailers found.</p>
 </section>
-
 </main>
-<footer>Javi Trailer Helper · v9.3.0</footer>
+<footer>Javi Trailer Helper · v9.5.0</footer>
 
 <dialog id="trailerDialog"><form id="trailerForm"><div class="dialogHead"><h2 id="dialogTitle">Add Trailer</h2><button type="button" id="closeDialog">×</button></div><input type="hidden" id="editId">
 <div class="pasteBox"><h3>Paste From ChatGPT</h3><textarea id="pasteData" rows="14" placeholder="Trailer ID\n\nVIN: 123456\nIMEI:\n\nDoor:\nCamera:\nATIS:\nRegulator:\nAir Tank:\n\nLFO:\nLFI:\nRFI:\nRFO:\nLRO:\nLRI:\nRRI:\nRRO:"></textarea><button type="button" id="autoFill" class="secondary full">Auto Fill</button></div>
@@ -36,4 +35,17 @@
 <div class="timeTotal"><span>Total estimated repair time</span><strong id="timeTotal">0 mins</strong></div>
 <div class="actions"><button type="button" id="reopenTrailer" class="secondary hidden">Mark Open</button><button type="submit" class="primary">Save as Completed</button></div>
 </form></dialog>
-<div id="toast"></div><script src="app.js?v=9.3.0"></script></body></html>
+
+<dialog id="notePickerDialog"><form method="dialog"><div class="dialogHead"><div><h2 id="notePickerTitle">Repair Note</h2><p id="notePickerTrailer" class="meta"></p></div><button type="button" id="closeNotePicker">×</button></div>
+<p class="hint">Choose a saved note. The sensor name is added automatically.</p>
+<div id="notePickerList" class="notePickerList"></div>
+<button type="button" id="openNoteSettings" class="secondary full">Edit Common Notes</button>
+</form></dialog>
+
+<dialog id="notesDialog"><form id="notesForm"><div class="dialogHead"><div><h2>Common Repair Notes</h2><p class="meta">Edit these once, then reuse them on any sensor.</p></div><button type="button" id="closeNotes">×</button></div>
+<div id="notesEditor" class="notesEditor"></div>
+<div class="noteSettingsActions"><button type="button" id="addNote" class="secondary">Add New Note</button><button type="button" id="resetNotes" class="danger">Reset Defaults</button></div>
+<div class="actions singleAction"><button type="submit" class="primary">Save Common Notes</button></div>
+</form></dialog>
+
+<div id="toast"></div><script src="app.js?v=9.5.0"></script></body></html>

@@ -1,4 +1,4 @@
-Javi Trailer Helper v9.4.0
+Javi Trailer Helper v9.5.0
 
 Update:
 - Shows repair minutes next to every sensor.
