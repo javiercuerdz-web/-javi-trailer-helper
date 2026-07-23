@@ -1,14 +1,18 @@
-Javi Trailer Helper
+Javi Trailer Helper — Final Build
 
-Upload all files in this folder to a GitHub repository, then enable GitHub Pages.
+Upload every file in this folder to the root of your GitHub repository and commit the changes.
 
-GitHub Pages setup:
-1. Create a new public repository named javi-trailer-helper.
-2. Upload index.html, styles.css, app.js, manifest.json, service-worker.js, and icon.svg.
-3. Open repository Settings > Pages.
-4. Under Build and deployment, choose Deploy from a branch.
-5. Select main and /(root), then Save.
-6. Open the published link on your iPhone.
-7. In Safari, tap Share > Add to Home Screen.
+Features:
+- Trailer database with all sensor fields
+- Search and one-tap copy
+- Multi-photo text extraction (beta)
+- Work list and completed count
+- Repair note generator
+- Backup and restore
+- Offline app support after loading
 
-The app stores data locally on the iPhone browser. Do not clear Safari website data unless you have exported a backup.
+Photo scan notes:
+- The first scan needs an internet connection to load the photo-reading engine.
+- Clear, straight, close-up photos give the best results.
+- Always review extracted values before saving.
+- Photos are processed in the browser and are not saved in the app.

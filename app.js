@@ -1,175 +1,40 @@
-const fieldNames = [
-  ["trailer","Trailer"],
-  ["imei","IMEI"],
-  ["vin6","VIN Last 6"],
-  ["mac","Gateway MAC"],
-  ["nosebox","Nosebox"],
-  ["atis","ATIS"],
-  ["receiver","Receiver"],
-  ["camera","Camera"],
-  ["door","Door"],
-  ["tank","Tank"],
-  ["regulator","Regulator"],
-  ["lfo","LFO"],["lfi","LFI"],["rfi","RFI"],["rfo","RFO"],
-  ["lro","LRO"],["lri","LRI"],["rri","RRI"],["rro","RRO"]
-];
-
-const starterData = [{
-  id: crypto.randomUUID(),
-  trailer: "HV2304865",
-  imei: "866961063299610",
-  vin6: "063923",
-  mac: "CA:45:9B:67:D0:B5",
-  nosebox: "", atis: "", receiver: "", camera: "", door: "",
-  tank: "", regulator: "",
-  lfo: "0404EEA0",
-  lfi: "04049509",
-  rfi: "0404956D",
-  rfo: "0404F4D6",
-  lro: "04053276",
-  lri: "0404E9DE",
-  rri: "0404F643",
-  rro: "0404F81F",
-  repairNotes: "",
-  complete: false
-}];
-
-let trailers = JSON.parse(localStorage.getItem("javiTrailers") || "null") || starterData;
-let currentId = null;
-
-const $ = id => document.getElementById(id);
-const list = $("trailerList");
-const editor = $("editor");
-const fields = $("fields");
-const search = $("search");
-const toast = $("toast");
-
-function saveLocal(){
-  localStorage.setItem("javiTrailers", JSON.stringify(trailers));
-}
-function showToast(text){
-  toast.textContent = text;
-  toast.classList.add("show");
-  setTimeout(()=>toast.classList.remove("show"), 1200);
-}
-async function copyText(text){
-  try{
-    await navigator.clipboard.writeText(text || "");
-    showToast("Copied");
-  }catch{
-    const box = document.createElement("textarea");
-    box.value = text || "";
-    document.body.appendChild(box);
-    box.select();
-    document.execCommand("copy");
-    box.remove();
-    showToast("Copied");
-  }
-}
-function renderList(){
-  const q = search.value.trim().toLowerCase();
-  list.innerHTML = "";
-  trailers
-    .filter(t => (t.trailer || "").toLowerCase().includes(q))
-    .sort((a,b)=>(a.complete===b.complete?0:a.complete?1:-1))
-    .forEach(t=>{
-      const card = document.createElement("div");
-      card.className = "card" + (t.complete ? " complete" : "");
-      card.innerHTML = `<div><h3>${escapeHtml(t.trailer || "Untitled Trailer")}</h3><div class="muted">${t.complete ? "Completed" : "Open"}${t.vin6 ? " • VIN " + escapeHtml(t.vin6) : ""}</div></div><button>Edit</button>`;
-      card.querySelector("button").onclick = ()=>openEditor(t.id);
-      list.appendChild(card);
-    });
-}
-function openEditor(id){
-  currentId = id;
-  const t = trailers.find(x=>x.id===id);
-  $("editorTitle").textContent = t.trailer || "Trailer";
-  fields.innerHTML = "";
-  fieldNames.forEach(([key,label])=>{
-    const row = document.createElement("div");
-    row.className = "field-row";
-    row.innerHTML = `<label>${label}</label><input data-key="${key}" value="${escapeAttr(t[key] || "")}"><button type="button">Copy</button>`;
-    row.querySelector("button").onclick = ()=>copyText(row.querySelector("input").value);
-    fields.appendChild(row);
-  });
-  $("repairNotes").value = t.repairNotes || "";
-  $("completeBtn").textContent = t.complete ? "Mark Open" : "Mark Complete";
-  editor.classList.remove("hidden");
-  editor.scrollIntoView({behavior:"smooth"});
-}
-function collectEditor(){
-  const t = trailers.find(x=>x.id===currentId);
-  fields.querySelectorAll("input").forEach(input=>t[input.dataset.key]=input.value.trim());
-  t.repairNotes = $("repairNotes").value.trim();
-  $("editorTitle").textContent = t.trailer || "Trailer";
-  return t;
-}
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
-function escapeAttr(s){return escapeHtml(s);}
-
-$("addTrailerBtn").onclick = ()=>{
-  const t = {id:crypto.randomUUID(), complete:false, repairNotes:""};
-  fieldNames.forEach(([key])=>t[key]="");
-  trailers.unshift(t);
-  saveLocal();
-  renderList();
-  openEditor(t.id);
-};
-$("closeEditorBtn").onclick = ()=>editor.classList.add("hidden");
-$("saveBtn").onclick = ()=>{
-  collectEditor();
-  saveLocal();
-  renderList();
-  showToast("Saved");
-};
-$("copyNotesBtn").onclick = ()=>copyText($("repairNotes").value);
-$("copyEverythingBtn").onclick = ()=>{
-  const t = collectEditor();
-  const lines = fieldNames
-    .filter(([key])=>t[key])
-    .map(([key,label])=>`${label}: ${t[key]}`);
-  if(t.repairNotes) lines.push(`Repair Notes: ${t.repairNotes}`);
-  copyText(lines.join("\n"));
-};
-$("completeBtn").onclick = ()=>{
-  const t = collectEditor();
-  t.complete = !t.complete;
-  saveLocal();
-  renderList();
-  $("completeBtn").textContent = t.complete ? "Mark Open" : "Mark Complete";
-  showToast(t.complete ? "Marked complete" : "Marked open");
-};
-$("deleteBtn").onclick = ()=>{
-  if(!confirm("Delete this trailer?")) return;
-  trailers = trailers.filter(x=>x.id!==currentId);
-  saveLocal();
-  renderList();
-  editor.classList.add("hidden");
-};
-$("importBtn").onclick = ()=>{
-  try{
-    const incoming = JSON.parse($("jsonBox").value);
-    const arr = Array.isArray(incoming) ? incoming : [incoming];
-    arr.forEach(item=>{
-      const t = {id:crypto.randomUUID(), complete:false, repairNotes:"", ...item};
-      fieldNames.forEach(([key])=>{ if(t[key]===undefined) t[key]=""; });
-      trailers.push(t);
-    });
-    saveLocal();
-    renderList();
-    $("jsonBox").value="";
-    showToast("Imported");
-  }catch{
-    alert("The pasted data is not valid JSON.");
-  }
-};
-$("exportBtn").onclick = ()=>{
-  $("jsonBox").value = JSON.stringify(trailers.map(({id,...rest})=>rest), null, 2);
-  $("jsonBox").focus();
-};
-search.oninput = renderList;
-
-if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("service-worker.js");
-}
-renderList();
+"use strict";
+const APP_VERSION=3, DATA_KEY="javiTrailerHelperDataV3";
+const SENSOR_FIELDS=[["nosebox","Nosebox"],["atis","ATIS"],["receiver","TPMS Receiver"],["camera","Camera"],["door","Door"],["tank","Tank"],["regulator","Regulator"],["lfo","LFO"],["lfi","LFI"],["rfi","RFI"],["rfo","RFO"],["lro","LRO"],["lri","LRI"],["rri","RRI"],["rro","RRO"],["cargo","Cargo Plate"]];
+const SCAN_FIELDS=[["number","Trailer number"],["vinLast6","Last 6 VIN"],["imei","IMEI"],["iccid","ICCID"],["mac","MAC address"],["caseNumber","Case number"],...SENSOR_FIELDS];
+const $=id=>document.getElementById(id); let toastTimer,scanFiles=[],scanData={};
+function uid(){return crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random())}
+function blankTrailer(){return{id:uid(),number:"",vinLast6:"",imei:"",iccid:"",mac:"",caseNumber:"",notes:"",sensors:Object.fromEntries(SENSOR_FIELDS.map(([k])=>[k,""]))}}
+let state=loadState();
+function loadState(){for(const key of [DATA_KEY,"javiTrailerHelperDataV2"]){try{const d=JSON.parse(localStorage.getItem(key));if(d&&Array.isArray(d.trailers)&&Array.isArray(d.work)){return{version:APP_VERSION,trailers:d.trailers,work:d.work}}}catch{}}return{version:APP_VERSION,trailers:[],work:[]}}
+function saveState(){localStorage.setItem(DATA_KEY,JSON.stringify(state));renderAll()}
+function esc(v=""){return String(v).replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function norm(v=""){return v.trim().toUpperCase().replace(/\s+/g,"")}
+function today(){return new Date().toLocaleDateString("en-CA")}
+function toast(m){clearTimeout(toastTimer);$("toast").textContent=m;$("toast").classList.add("show");toastTimer=setTimeout(()=>$("toast").classList.remove("show"),1800)}
+async function copyText(t,l="Value"){if(!t)return toast(`No ${l.toLowerCase()} saved`);try{await navigator.clipboard.writeText(t)}catch{const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove()}toast(`${l} copied`)}
+function renderAll(){renderTrailers();renderWork();const d=today();$("trailerCount").textContent=state.trailers.length;$("todayCount").textContent=state.work.filter(x=>x.completed&&x.completedDate===d).length;$("openCount").textContent=state.work.filter(x=>!x.completed).length}
+function renderTrailers(){const q=$("searchInput").value.trim().toUpperCase();const a=state.trailers.filter(t=>!q||t.number.includes(q)||(t.vinLast6||"").includes(q)).sort((x,y)=>x.number.localeCompare(y.number));$("trailerList").innerHTML=a.map(t=>{const f=[["VIN",t.vinLast6],["IMEI",t.imei],["ICCID",t.iccid],["MAC",t.mac],["Case",t.caseNumber],...SENSOR_FIELDS.map(([k,l])=>[l,t.sensors?.[k]])].filter(x=>x[1]);return`<article class="trailer-card"><div class="trailer-head"><div><h2 class="trailer-title">${esc(t.number)}</h2><p class="meta">${t.vinLast6?`VIN ${esc(t.vinLast6)}`:"No VIN saved"}</p></div><div class="trailer-actions"><button class="secondary mini" data-add-work="${t.id}">Today</button><button class="secondary mini" data-edit="${t.id}">Edit</button></div></div>${f.length?`<div class="sensor-grid">${f.map(([l,v])=>`<button class="copy-field" data-copy="${esc(v)}" data-label="${esc(l)}"><small>${esc(l)}</small><span>${esc(v)}</span></button>`).join("")}</div>`:`<p class="hint">Tap Edit to add information.</p>`}${t.notes?`<p class="work-repairs">${esc(t.notes)}</p>`:""}</article>`}).join("");$("emptyTrailers").classList.toggle("hidden",a.length>0)}
+function renderWork(){const a=[...state.work].sort((x,y)=>Number(x.completed)-Number(y.completed)||x.number.localeCompare(y.number));$("workList").innerHTML=a.map(x=>`<article class="work-card ${x.completed?"done":""}"><div class="work-head"><div><div class="work-name">${esc(x.number)}</div>${x.repairs?`<p class="work-repairs">${esc(x.repairs)}</p>`:""}</div><button class="${x.completed?"secondary":"primary"} mini" data-toggle-work="${x.id}">${x.completed?"Undo":"Complete"}</button></div><div class="button-row"><button class="secondary mini" data-edit-work="${x.id}">Repairs</button><button class="danger mini" data-delete-work="${x.id}">Remove</button></div></article>`).join("");$("emptyWork").classList.toggle("hidden",a.length>0)}
+function setupFields(){$("sensorInputs").innerHTML=SENSOR_FIELDS.map(([k,l])=>`<label>${l}<input id="sensor_${k}" autocapitalize="characters"></label>`).join("");$("noteComponent").innerHTML=SENSOR_FIELDS.filter(x=>x[0]!=="cargo").map(([,l])=>`<option>${l}</option>`).join("");$("scanResults").innerHTML=SCAN_FIELDS.map(([k,l])=>`<label>${l}<input id="scan_${k}" autocapitalize="characters"></label>`).join("")}
+function openTrailer(id=""){const t=state.trailers.find(x=>x.id===id)||blankTrailer();$("dialogTitle").textContent=id?"Edit Trailer":"Add Trailer";$("editId").value=id;for(const k of ["number","vinLast6","imei","iccid","mac","caseNumber","notes"]){const el=$(k==="number"?"trailerNumber":k==="notes"?"trailerNotes":k);el.value=t[k]||""}SENSOR_FIELDS.forEach(([k])=>$("sensor_"+k).value=t.sensors?.[k]||"");$("deleteTrailerButton").classList.toggle("hidden",!id);$("trailerDialog").showModal()}
+function saveTrailer(e){e.preventDefault();const n=norm($("trailerNumber").value);if(!n)return toast("Trailer number is required");const id=$("editId").value||uid();if(state.trailers.some(t=>t.number===n&&t.id!==id))return toast("That trailer already exists");const t={id,number:n,vinLast6:$("vinLast6").value.trim().toUpperCase().slice(-6),imei:$("imei").value.trim(),iccid:$("iccid").value.trim(),mac:$("mac").value.trim().toUpperCase(),caseNumber:$("caseNumber").value.trim(),notes:$("trailerNotes").value.trim(),sensors:Object.fromEntries(SENSOR_FIELDS.map(([k])=>[k,$("sensor_"+k).value.trim()]))};const i=state.trailers.findIndex(x=>x.id===id);i>=0?state.trailers[i]=t:state.trailers.push(t);$("trailerDialog").close();saveState();toast("Trailer saved")}
+function addWork(raw){let c=0;raw.split(/[\n,]+/).map(s=>norm((s.match(/[A-Z]{0,3}\d{3,}/i)||[s.split(/\s+/)[0]])[0])).filter(Boolean).forEach(n=>{if(!state.work.some(x=>x.number===n&&!x.completed)){state.work.push({id:uid(),number:n,repairs:"",completed:false,completedDate:""});c++}});saveState();return c}
+function generateNote(){const c=$("noteComponent").value,a=$("noteAction").value,cl=c.toLowerCase();const m={noIssues:`No issues found with ${c}. Triggered the sensor and verified that it was working on the PCT app.`,replaced:`${c} sensor was not working on the PCT app. Replaced it with a new sensor and verified that it was working on the PCT app.`,missing:`${c} sensor was missing. Replaced it with a new sensor and verified that it was working on the PCT app.`,repairedApp:`Repaired the ${cl} sensor on the PCT app and verified that it was working on the PCT app.`,rewired:`Rewired the ${cl} sensor and verified that it was working on the PCT app.`,verified:`Performed a health check on the ${cl} sensor and verified that it was working properly on the PCT app.`,valve:`Regulator valve was turned off. Turned it back on and verified that the regulator sensor was working on the PCT app.`,custom:$("customNote").value.trim()};let n=m[a]||"";if($("smart7Reason").checked&&n)n=n.replace(/\.$/,"")+" after replacing the damaged Smart 7 box.";if($("verifySerial").checked&&n)n=n.replace(/\.$/,"")+" Also verified that the sensor serial number matched.";if($("noteCase").value.trim()&&n)n=`Case ${$("noteCase").value.trim()}: ${n}`;$("generatedNote").value=n}
+function exportBackup(){const b=new Blob([JSON.stringify({...state,exportedAt:new Date().toISOString()},null,2)],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=`javi-trailer-helper-backup-${today()}.json`;a.click();URL.revokeObjectURL(u);toast("Backup exported")}
+function importBackup(file){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.trailers)||!Array.isArray(d.work))throw 0;state={version:APP_VERSION,trailers:d.trailers,work:d.work};saveState();$("backupDialog").close();toast("Backup restored")}catch{alert("That file is not a valid backup.")}};r.readAsText(file)}
+function previewPhotos(){const box=$("photoPreview");box.innerHTML="";scanFiles=[...$("scanFiles").files];scanFiles.forEach(f=>{const img=document.createElement("img");img.className="photo-thumb";img.src=URL.createObjectURL(f);box.appendChild(img)});$("scanButton").disabled=!scanFiles.length;$("scanStatus").textContent=scanFiles.length?`${scanFiles.length} photo${scanFiles.length===1?"":"s"} selected.`:""}
+async function loadTesseract(){if(window.Tesseract)return;$("scanStatus").textContent="Loading photo reader…";await new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";s.onload=res;s.onerror=()=>rej(new Error("Could not load photo reader"));document.head.appendChild(s)})}
+function firstMatch(text,patterns){for(const p of patterns){const m=text.match(p);if(m)return(m[1]||m[0]).replace(/\s/g,"")}return""}
+function parseOCR(text){const u=text.toUpperCase(),out={};out.number=norm($("scanTrailerNumber").value)||firstMatch(u,[/\b((?:HV|GV|WV|DV|SV|V)\d{5,8})\b/]);const vin=firstMatch(u,[/\b([A-HJ-NPR-Z0-9]{17})\b/]);out.vinLast6=vin?vin.slice(-6):firstMatch(u,[/(?:VIN|LAST\s*6)[^A-Z0-9]{0,8}([A-Z0-9]{6})\b/]);out.imei=firstMatch(u,[/(?:IMEI)[^0-9]{0,12}(\d{14,17})\b/,/\b(86\d{13})\b/]);out.iccid=firstMatch(u,[/(?:ICCID|SIM)[^0-9]{0,15}(89\d{17,20})\b/,/\b(89\d{17,20})\b/]);out.mac=firstMatch(u,[/(?:MAC)[^A-F0-9]{0,12}([A-F0-9]{2}(?::|-)?[A-F0-9]{2}(?::|-)?[A-F0-9]{2}(?::|-)?[A-F0-9]{2}(?::|-)?[A-F0-9]{2}(?::|-)?[A-F0-9]{2})\b/]);if(out.mac&&out.mac.length===12)out.mac=out.mac.match(/.{2}/g).join(":");out.caseNumber=firstMatch(u,[/(?:CASE|TICKET)[^0-9]{0,10}(00\d{6})\b/,/\b(00\d{6})\b/]);const labels={nosebox:["NOSEBOX","NOSE BOX"],atis:["ATIS","LAMP CHECK"],receiver:["TPMS RECEIVER","RECEIVER"],camera:["CAMERA"],door:["DOOR"],tank:["TANK"],regulator:["REGULATOR"],lfo:["LFO"],lfi:["LFI"],rfi:["RFI"],rfo:["RFO"],lro:["LRO"],lri:["LRI"],rri:["RRI"],rro:["RRO"],cargo:["CARGO PLATE","CARGO"]};for(const [k,names] of Object.entries(labels)){for(const name of names){const re=new RegExp(`${name.replace(" ","\\s*")}[^A-Z0-9]{0,18}([A-Z0-9:-]{5,24})`);const m=u.match(re);if(m&&!names.includes(m[1])){out[k]=m[1];break}}}return out}
+async function scanPhotos(){if(!scanFiles.length)return;$("scanButton").disabled=true;$("scanProgress").classList.remove("hidden");$("scanResultsCard").classList.add("hidden");let all="";try{await loadTesseract();for(let i=0;i<scanFiles.length;i++){$("scanStatus").textContent=`Reading photo ${i+1} of ${scanFiles.length}…`;const result=await Tesseract.recognize(scanFiles[i],"eng",{logger:m=>{if(m.status==="recognizing text")$("scanProgressBar").style.width=`${((i+m.progress)/scanFiles.length)*100}%`}});all+="\n\n--- PHOTO "+(i+1)+" ---\n"+result.data.text}scanData=parseOCR(all);SCAN_FIELDS.forEach(([k])=>$("scan_"+k).value=scanData[k]||"");$("scanRawText").value=all.trim();$("scanResultsCard").classList.remove("hidden");$("scanStatus").textContent="Scan complete. Review the information before saving.";$("scanProgressBar").style.width="100%"}catch(e){$("scanStatus").textContent="Photo scan could not start. Check your internet connection and try again.";alert(e.message)}finally{$("scanButton").disabled=false}}
+function saveScan(){const n=norm($("scan_number").value);if(!n)return toast("Trailer number is required");let t=state.trailers.find(x=>x.number===n)||blankTrailer();t.number=n;t.vinLast6=$("scan_vinLast6").value.trim().toUpperCase().slice(-6);for(const k of ["imei","iccid","mac","caseNumber"])t[k]=$("scan_"+k).value.trim();SENSOR_FIELDS.forEach(([k])=>t.sensors[k]=$("scan_"+k).value.trim());if(!state.trailers.some(x=>x.id===t.id))state.trailers.push(t);saveState();toast("Trailer saved");document.querySelector('[data-view="trailersView"]').click()}
+function clearScan(){$("scanFiles").value="";scanFiles=[];$("photoPreview").innerHTML="";$("scanResultsCard").classList.add("hidden");$("scanStatus").textContent="";$("scanProgress").classList.add("hidden");$("scanProgressBar").style.width="0"}
+setupFields();renderAll();
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.matches(".tab")){document.querySelectorAll(".tab,.view").forEach(x=>x.classList.remove("active"));b.classList.add("active");$(b.dataset.view).classList.add("active")}if(b.dataset.copy)copyText(b.dataset.copy,b.dataset.label);if(b.dataset.edit)openTrailer(b.dataset.edit);if(b.dataset.addWork){const t=state.trailers.find(x=>x.id===b.dataset.addWork);if(t)addWork(t.number)}if(b.dataset.toggleWork){const x=state.work.find(y=>y.id===b.dataset.toggleWork);x.completed=!x.completed;x.completedDate=x.completed?today():"";saveState()}if(b.dataset.deleteWork){state.work=state.work.filter(x=>x.id!==b.dataset.deleteWork);saveState()}if(b.dataset.editWork){const x=state.work.find(y=>y.id===b.dataset.editWork),v=prompt("Repairs for "+x.number,x.repairs||"");if(v!==null){x.repairs=v.trim();saveState()}}});
+$("searchInput").addEventListener("input",renderTrailers);$("addTrailerButton").onclick=()=>openTrailer();$("closeDialogButton").onclick=()=>$("trailerDialog").close();$("trailerForm").onsubmit=saveTrailer;$("deleteTrailerButton").onclick=()=>{const id=$("editId").value,t=state.trailers.find(x=>x.id===id);if(t&&confirm(`Delete ${t.number}?`)){state.trailers=state.trailers.filter(x=>x.id!==id);$("trailerDialog").close();saveState()}};
+$("addWorkButton").onclick=()=>{const n=addWork($("workPaste").value);$("workPaste").value="";toast(`${n} trailer${n===1?"":"s"} added`)};$("clearCompletedButton").onclick=()=>{state.work=state.work.filter(x=>!x.completed);saveState()};
+$("noteAction").onchange=()=>$("customNoteWrap").classList.toggle("hidden",$("noteAction").value!=="custom");$("generateNoteButton").onclick=generateNote;$("copyNoteButton").onclick=()=>copyText($("generatedNote").value,"Note");
+$("backupButton").onclick=()=>$("backupDialog").showModal();$("closeBackupButton").onclick=()=>$("backupDialog").close();$("exportButton").onclick=exportBackup;$("importFile").onchange=e=>e.target.files[0]&&importBackup(e.target.files[0]);$("resetButton").onclick=()=>{if(confirm("Erase all saved trailer and work-list data?")){state={version:APP_VERSION,trailers:[],work:[]};saveState();$("backupDialog").close()}};
+$("scanFiles").onchange=previewPhotos;$("scanButton").onclick=scanPhotos;$("clearScanButton").onclick=clearScan;$("saveScanButton").onclick=saveScan;
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js"));

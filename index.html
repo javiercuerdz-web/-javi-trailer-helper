@@ -1,60 +1,80 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#111827" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Trailer Helper">
   <title>Javi Trailer Helper</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header>
-    <h1>Javi Trailer Helper</h1>
-    <p>Search a trailer and tap any value to copy it.</p>
-  </header>
+<header class="topbar">
+  <div><h1>Javi Trailer Helper</h1><p>Trailer data, photo scan, work list, and repair notes.</p></div>
+  <button class="icon-button" id="backupButton" type="button" aria-label="Backup and restore">⋯</button>
+</header>
+<main>
+  <section class="stats"><div class="stat"><span id="trailerCount">0</span><small>Trailers</small></div><div class="stat"><span id="todayCount">0</span><small>Done today</small></div><div class="stat"><span id="openCount">0</span><small>Open</small></div></section>
+  <nav class="tabs">
+    <button class="tab active" data-view="trailersView">Trailers</button>
+    <button class="tab" data-view="scanView">Scan Photos</button>
+    <button class="tab" data-view="workView">Work List</button>
+    <button class="tab" data-view="notesView">Notes</button>
+  </nav>
 
-  <main>
-    <section class="toolbar">
-      <input id="search" type="search" placeholder="Search trailer number" autocomplete="off" />
-      <button id="addTrailerBtn" class="primary">Add Trailer</button>
-    </section>
+  <section id="trailersView" class="view active">
+    <div class="toolbar"><input id="searchInput" type="search" placeholder="Search trailer or last 6 VIN"><button class="primary" id="addTrailerButton">Add Trailer</button></div>
+    <div id="trailerList" class="stack"></div><div id="emptyTrailers" class="empty hidden">No trailers found.</div>
+  </section>
 
-    <section id="trailerList" class="trailer-list"></section>
+  <section id="scanView" class="view">
+    <div class="card">
+      <h2>Build Trailer From Photos</h2>
+      <p class="hint">Select multiple clear photos. The app reads visible labels and combines the information. Review everything before saving.</p>
+      <label>Trailer number (recommended)<input id="scanTrailerNumber" autocapitalize="characters" placeholder="HV2304865"></label>
+      <label class="primary file-label full">Choose Photos<input id="scanFiles" type="file" accept="image/*" multiple></label>
+      <div id="photoPreview" class="photo-grid"></div>
+      <button class="primary full" id="scanButton" disabled>Scan Selected Photos</button>
+      <div id="scanProgress" class="progress hidden"><div id="scanProgressBar"></div></div>
+      <p id="scanStatus" class="hint"></p>
+    </div>
+    <div id="scanResultsCard" class="card hidden">
+      <h2>Review Extracted Information</h2>
+      <div id="scanResults" class="form-grid"></div>
+      <label>Unmatched text<textarea id="scanRawText" rows="7"></textarea></label>
+      <div class="button-row"><button class="secondary" id="clearScanButton">Clear</button><button class="primary" id="saveScanButton">Save Trailer</button></div>
+    </div>
+  </section>
 
-    <section id="editor" class="editor hidden">
-      <div class="editor-head">
-        <h2 id="editorTitle">Trailer</h2>
-        <button id="closeEditorBtn" class="ghost">Close</button>
-      </div>
+  <section id="workView" class="view">
+    <div class="card"><h2>Today’s Work List</h2><p class="hint">Paste one trailer per line. Extra list details are ignored.</p><textarea id="workPaste" rows="7" placeholder="HV2304865
+GV2502231
+V522539"></textarea><div class="button-row"><button class="primary" id="addWorkButton">Add to List</button><button class="secondary" id="clearCompletedButton">Remove Completed</button></div></div>
+    <div id="workList" class="stack"></div><div id="emptyWork" class="empty hidden">Your work list is empty.</div>
+  </section>
 
-      <div id="fields" class="fields"></div>
+  <section id="notesView" class="view">
+    <div class="card"><h2>Repair Note Generator</h2>
+      <label>Case number<input id="noteCase" inputmode="numeric" placeholder="00138383"></label>
+      <label>Component<select id="noteComponent"></select></label>
+      <label>Repair performed<select id="noteAction"><option value="noIssues">No issues found</option><option value="replaced">Replaced not-working sensor</option><option value="missing">Replaced missing sensor</option><option value="repairedApp">Repaired on PCT app</option><option value="rewired">Rewired sensor</option><option value="verified">Health check / verified</option><option value="valve">Regulator valve turned back on</option><option value="custom">Custom note</option></select></label>
+      <label id="customNoteWrap" class="hidden">Custom note<textarea id="customNote" rows="4"></textarea></label>
+      <label class="check"><input id="smart7Reason" type="checkbox"> Needed after replacing damaged Smart 7 box</label>
+      <label class="check"><input id="verifySerial" type="checkbox"> Include serial number verification</label>
+      <button class="primary full" id="generateNoteButton">Generate Note</button>
+    </div>
+    <div class="card"><h2>Generated Note</h2><textarea id="generatedNote" rows="7" readonly></textarea><button class="secondary full" id="copyNoteButton">Copy Note</button></div>
+  </section>
+</main>
 
-      <label class="notes-label" for="repairNotes">Repair Notes</label>
-      <textarea id="repairNotes" rows="5" placeholder="Enter repair notes"></textarea>
+<dialog id="trailerDialog"><form id="trailerForm" method="dialog"><div class="dialog-head"><h2 id="dialogTitle">Add Trailer</h2><button class="icon-button" id="closeDialogButton" type="button">×</button></div><input id="editId" type="hidden"><div class="form-grid"><label>Trailer number<input id="trailerNumber" required autocapitalize="characters"></label><label>Last 6 VIN<input id="vinLast6" maxlength="6" autocapitalize="characters"></label><label>IMEI<input id="imei" inputmode="numeric"></label><label>ICCID<input id="iccid" inputmode="numeric"></label><label>MAC address<input id="mac" autocapitalize="characters"></label><label>Case number<input id="caseNumber" inputmode="numeric"></label></div><h3>Trailer Sensors</h3><div id="sensorInputs" class="form-grid"></div><label>Notes<textarea id="trailerNotes" rows="3"></textarea></label><div class="button-row sticky-actions"><button class="danger hidden" id="deleteTrailerButton" type="button">Delete</button><button class="primary" type="submit">Save Trailer</button></div></form></dialog>
 
-      <div class="actions">
-        <button id="copyNotesBtn">Copy Notes</button>
-        <button id="copyEverythingBtn">Copy Everything</button>
-        <button id="saveBtn" class="primary">Save</button>
-        <button id="completeBtn">Mark Complete</button>
-        <button id="deleteBtn" class="danger">Delete</button>
-      </div>
-    </section>
-
-    <section class="import-export">
-      <h2>Daily Data</h2>
-      <textarea id="jsonBox" rows="7" placeholder='Paste trailer JSON here'></textarea>
-      <div class="actions">
-        <button id="importBtn">Import</button>
-        <button id="exportBtn">Export</button>
-      </div>
-    </section>
-  </main>
-
-  <div id="toast" class="toast" aria-live="polite"></div>
-
-  <script src="app.js"></script>
-</body>
-</html>
+<dialog id="backupDialog"><div class="dialog-head"><h2>Backup & Restore</h2><button class="icon-button" id="closeBackupButton">×</button></div><p class="hint">Export regularly. App data is stored on this device.</p><div class="button-row vertical-mobile"><button class="primary" id="exportButton">Export Backup</button><label class="secondary file-label">Import Backup<input id="importFile" type="file" accept="application/json"></label></div><button class="danger full" id="resetButton">Erase All App Data</button></dialog>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="app.js"></script>
+</body></html>
