@@ -1,3 +1,3 @@
-Javi Trailer Helper v9.2.0
+Javi Trailer Helper v9.3.0
 
-Fixes daily 540-minute counter and forces updated app files to load. Existing trailer data is preserved.
+Update: Removed the Work List feature. All trailer information, completion tracking, and the 540-minute daily goal remain unchanged.
