@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-192.png"><link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<header><div><h1>Javi Trailer Helper</h1><p>Trailer info, work list, and repair time</p></div><span class="version">v9.1.0</span></header>
+<header><div><h1>Javi Trailer Helper</h1><p>Trailer info, work list, and repair time</p></div><span class="version">v9.2.0</span></header>
 <main>
 <section class="stats"><div><b id="totalCount">0</b><small>Trailers</small></div><div><b id="doneCount">0</b><small>Completed</small></div><div><b id="openCount">0</b><small>Open</small></div></section>
 <section id="dailyGoal" class="dailyGoal"><div class="goalTop"><div><small>Today's repair-time goal</small><strong><span id="todayMinutes">0</span> / 540 mins</strong></div><span id="goalPercent" class="goalPercent">0%</span></div><div class="progressTrack"><div id="goalProgress" class="progressFill"></div></div><p id="goalMessage">540 mins remaining</p></section>
@@ -23,7 +23,7 @@
 <div id="workList"></div><p id="noWork" class="empty">Work list is empty.</p>
 </section>
 </main>
-<footer>Javi Trailer Helper · v9.1.0</footer>
+<footer>Javi Trailer Helper · v9.2.0</footer>
 
 <dialog id="trailerDialog"><form id="trailerForm"><div class="dialogHead"><h2 id="dialogTitle">Add Trailer</h2><button type="button" id="closeDialog">×</button></div><input type="hidden" id="editId">
 <div class="pasteBox"><h3>Paste From ChatGPT</h3><textarea id="pasteData" rows="14" placeholder="Trailer ID\n\nVIN: 123456\nIMEI:\n\nDoor:\nCamera:\nATIS:\nRegulator:\nAir Tank:\n\nLFO:\nLFI:\nRFI:\nRFO:\nLRO:\nLRI:\nRRI:\nRRO:"></textarea><button type="button" id="autoFill" class="secondary full">Auto Fill</button></div>
@@ -40,4 +40,4 @@
 <div class="timeTotal"><span>Total estimated repair time</span><strong id="timeTotal">0 mins</strong></div>
 <div class="actions"><button type="button" id="reopenTrailer" class="secondary hidden">Mark Open</button><button type="submit" class="primary">Save as Completed</button></div>
 </form></dialog>
-<div id="toast"></div><script src="app.js"></script></body></html>
+<div id="toast"></div><script src="app.js?v=9.2.0"></script></body></html>

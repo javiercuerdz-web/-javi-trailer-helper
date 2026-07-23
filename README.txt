@@ -1,2 +1,3 @@
-Javi Trailer Helper v9.1.0
-Daily 540-minute goal tracker added. Upload all files to the GitHub repository root and replace the existing files.
+Javi Trailer Helper v9.2.0
+
+Fixes daily 540-minute counter and forces updated app files to load. Existing trailer data is preserved.

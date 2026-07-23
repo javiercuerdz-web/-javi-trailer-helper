@@ -1,5 +1,5 @@
 "use strict";
-const VERSION="9.1.0", KEY="javiTrailerHelperDataV9", DAILY_GOAL=540;
+const VERSION="9.2.0", KEY="javiTrailerHelperDataV9", DAILY_GOAL=540;
 const FIELDS=[["door","Door"],["camera","Camera"],["atis","ATIS"],["regulator","Regulator"],["tank","Air Tank"],["lfo","LFO"],["lfi","LFI"],["rfi","RFI"],["rfo","RFO"],["lro","LRO"],["lri","LRI"],["rri","RRI"],["rro","RRO"]];
 const SERVICES=[
 ["lfi","LFI",15],["lfo","LFO",15],["lri","LRI",15],["lro","LRO",15],["rfi","RFI",15],["rfo","RFO",15],["rri","RRI",15],["rro","RRO",15],
@@ -8,7 +8,8 @@ const SERVICES=[
 const $=id=>document.getElementById(id); let toastTimer;
 function uid(){return crypto.randomUUID?crypto.randomUUID():Date.now()+"-"+Math.random()}
 function load(){for(const k of [KEY,"javiTrailerHelperDataV8","javiTrailerHelperDataV7","javiTrailerHelperDataV6","javiTrailerHelperDataV5","javiTrailerHelperDataV4"]){try{const old=JSON.parse(localStorage.getItem(k));if(old){return{trailers:(old.trailers||[]).map(migrateTrailer),work:(old.work||[]).map(migrateWork)}}}catch{}}return{trailers:[],work:[]}}
-function migrateTrailer(t){const s=t.sensors||{};return{id:t.id||uid(),number:(t.number||"").toUpperCase(),vin6:(t.vinLast6||t.vin6||"").slice(-6).toUpperCase(),imei:t.imei||"",status:t.status||"open",createdAt:t.createdAt||Date.now(),updatedAt:t.updatedAt||Date.now(),completedAt:t.completedAt||null,services:Array.isArray(t.services)?t.services:[],totalMinutes:Number(t.totalMinutes)||0,sensors:Object.fromEntries(FIELDS.map(([k])=>[k,s[k]||""]))}}
+function localDateKey(value=Date.now()){const d=new Date(value);if(!Number.isFinite(d.getTime()))return "";return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+function migrateTrailer(t){const s=t.sensors||{};const completedAt=t.completedAt||null;return{id:t.id||uid(),number:(t.number||"").toUpperCase(),vin6:(t.vinLast6||t.vin6||"").slice(-6).toUpperCase(),imei:t.imei||"",status:t.status||"open",createdAt:t.createdAt||Date.now(),updatedAt:t.updatedAt||Date.now(),completedAt,completedDate:t.completedDate||localDateKey(timestampMs(completedAt)),services:Array.isArray(t.services)?t.services:[],totalMinutes:Number(t.totalMinutes)||0,sensors:Object.fromEntries(FIELDS.map(([k])=>[k,s[k]||""]))}}
 function migrateWork(w){return{id:w.id||uid(),number:(w.number||"").toUpperCase(),sensors:Array.isArray(w.sensors)?w.sensors:[],completed:!!w.completed,createdAt:w.createdAt||Date.now()}}
 let state=load();
 function save(){localStorage.setItem(KEY,JSON.stringify(state));render()}
@@ -31,14 +32,12 @@ function completionTime(t){
   return Number.isFinite(updated)?updated:NaN
 }
 function todayTotal(){
-  const now=new Date();
-  const start=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
-  const end=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1).getTime();
+  const today=localDateKey();
   return state.trailers.reduce((sum,t)=>{
     if(String(t.status).toLowerCase()!=="completed")return sum;
-    const when=completionTime(t);
-    if(!Number.isFinite(when)||when<start||when>=end)return sum;
-    return sum+(Number(t.totalMinutes)||0)
+    const completedDay=t.completedDate||localDateKey(completionTime(t));
+    if(completedDay!==today)return sum;
+    return sum+(Number(t.totalMinutes)||0);
   },0)
 }
 function renderDailyGoal(){const total=todayTotal(),remaining=Math.max(DAILY_GOAL-total,0),over=Math.max(total-DAILY_GOAL,0),percent=Math.round((total/DAILY_GOAL)*100);$("todayMinutes").textContent=total;$("goalPercent").textContent=percent+"%";$("goalProgress").style.width=Math.min(percent,100)+"%";$("dailyGoal").classList.toggle("goalReached",total>=DAILY_GOAL);$("dailyGoal").classList.toggle("goalWarning",total>=480&&total<DAILY_GOAL);$("goalMessage").textContent=over?`${over} mins over today’s goal`:remaining?`${remaining} mins remaining`:"Daily goal reached"}
@@ -54,9 +53,9 @@ function recommendedServices(t){const ids=[];for(const [k] of FIELDS){if(!t.sens
 function openComplete(id){const t=state.trailers.find(x=>x.id===id);if(!t)return;$("completeId").value=id;$("completeTrailerNumber").textContent=t.number;const selected=t.services.length?t.services:recommendedServices(t);$("servicePicker").querySelectorAll("input").forEach(x=>x.checked=selected.includes(x.value));$("reopenTrailer").classList.toggle("hidden",t.status!=="completed");updateTime();$("completeDialog").showModal()}
 function updateTime(){const total=[...$("servicePicker").querySelectorAll("input:checked")].reduce((n,x)=>n+Number(x.dataset.mins),0);$("timeTotal").textContent=formatMinutes(total)}
 $("autoFill").onclick=()=>{const d=parsePaste($("pasteData").value);if(d.number)$("trailerId").value=d.number;if(d.vin6)$("vin6").value=d.vin6;if(d.imei)$("imei").value=d.imei;FIELDS.forEach(([k])=>{if(d.sensors[k]!==undefined)$("s_"+k).value=d.sensors[k]});toast("Fields filled")};
-$("trailerForm").onsubmit=e=>{e.preventDefault();const number=$("trailerId").value.trim().toUpperCase();if(!number)return;const id=$("editId").value||uid();const old=state.trailers.find(t=>t.id===id);const t={id,number,vin6:$("vin6").value.trim().slice(-6).toUpperCase(),imei:$("imei").value.trim(),status:old?.status||"open",createdAt:old?.createdAt||Date.now(),updatedAt:Date.now(),completedAt:old?.completedAt||null,services:old?.services||[],totalMinutes:old?.totalMinutes||0,sensors:Object.fromEntries(FIELDS.map(([k])=>[k,$("s_"+k).value.trim()]))};const i=state.trailers.findIndex(x=>x.id===id);if(i>=0)state.trailers[i]=t;else state.trailers.unshift(t);$("trailerDialog").close();save();toast("Trailer saved")};
-$("completeForm").onsubmit=e=>{e.preventDefault();const t=state.trailers.find(x=>x.id===$("completeId").value);if(!t)return;const wasCompleted=t.status==="completed";const checked=[...$("servicePicker").querySelectorAll("input:checked")];t.services=checked.map(x=>x.value);t.totalMinutes=checked.reduce((n,x)=>n+Number(x.dataset.mins),0);t.status="completed";t.completedAt=wasCompleted&&Number.isFinite(timestampMs(t.completedAt))?timestampMs(t.completedAt):Date.now();t.updatedAt=Date.now();const w=state.work.find(x=>x.number===t.number&&!x.completed);if(w)w.completed=true;$("completeDialog").close();save();const total=todayTotal();toast(total>=DAILY_GOAL?`Daily goal reached: ${total} mins`:`${total} / ${DAILY_GOAL} mins today`)};
-$("reopenTrailer").onclick=()=>{const t=state.trailers.find(x=>x.id===$("completeId").value);if(!t)return;t.status="open";t.completedAt=null;$("completeDialog").close();save();toast("Trailer marked open")};
+$("trailerForm").onsubmit=e=>{e.preventDefault();const number=$("trailerId").value.trim().toUpperCase();if(!number)return;const id=$("editId").value||uid();const old=state.trailers.find(t=>t.id===id);const t={id,number,vin6:$("vin6").value.trim().slice(-6).toUpperCase(),imei:$("imei").value.trim(),status:old?.status||"open",createdAt:old?.createdAt||Date.now(),updatedAt:Date.now(),completedAt:old?.completedAt||null,completedDate:old?.completedDate||"",services:old?.services||[],totalMinutes:old?.totalMinutes||0,sensors:Object.fromEntries(FIELDS.map(([k])=>[k,$("s_"+k).value.trim()]))};const i=state.trailers.findIndex(x=>x.id===id);if(i>=0)state.trailers[i]=t;else state.trailers.unshift(t);$("trailerDialog").close();save();toast("Trailer saved")};
+$("completeForm").onsubmit=e=>{e.preventDefault();const t=state.trailers.find(x=>x.id===$("completeId").value);if(!t)return;const wasCompleted=t.status==="completed";const checked=[...$("servicePicker").querySelectorAll("input:checked")];t.services=checked.map(x=>x.value);t.totalMinutes=checked.reduce((n,x)=>n+Number(x.dataset.mins),0);t.status="completed";t.completedAt=wasCompleted&&Number.isFinite(timestampMs(t.completedAt))?timestampMs(t.completedAt):Date.now();t.completedDate=localDateKey(t.completedAt);t.updatedAt=Date.now();const w=state.work.find(x=>x.number===t.number&&!x.completed);if(w)w.completed=true;$("completeDialog").close();save();const total=todayTotal();toast(total>=DAILY_GOAL?`Daily goal reached: ${total} mins`:`${total} / ${DAILY_GOAL} mins today`)};
+$("reopenTrailer").onclick=()=>{const t=state.trailers.find(x=>x.id===$("completeId").value);if(!t)return;t.status="open";t.completedAt=null;t.completedDate="";$("completeDialog").close();save();toast("Trailer marked open")};
 $("servicePicker").onchange=updateTime;
 $("addWork").onclick=()=>{const number=$("workTrailer").value.trim().toUpperCase();if(!number)return toast("Enter trailer number");const sensors=[...$("workSensorPicker").querySelectorAll("input:checked")].map(x=>x.value);state.work.unshift({id:uid(),number,sensors,completed:false,createdAt:Date.now()});$("workTrailer").value="";$("workSensorPicker").querySelectorAll("input").forEach(x=>x.checked=false);save()};
 document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.edit)openDialog(b.dataset.edit);if(b.dataset.complete)openComplete(b.dataset.complete);if(b.dataset.copy!==undefined)copy(b.dataset.copy,b.dataset.label);if(b.dataset.toggle){const w=state.work.find(x=>x.id===b.dataset.toggle);w.completed=!w.completed;save()}if(b.dataset.remove){state.work=state.work.filter(x=>x.id!==b.dataset.remove);save()}if(b.dataset.addsensor){const w=state.work.find(x=>x.id===b.dataset.addsensor);if(!w.sensors.includes(b.dataset.sensor))w.sensors.push(b.dataset.sensor);save()}});
