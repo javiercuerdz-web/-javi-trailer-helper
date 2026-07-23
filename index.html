@@ -1,93 +1,35 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#111827">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Trailer Helper">
-  <title>Javi Trailer Helper</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="stylesheet" href="styles.css">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Trailer Helper"><title>Javi Trailer Helper</title>
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-192.png"><link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<header class="topbar">
-  <div><h1>Javi Trailer Helper</h1><p>Trailer data, photo scan, work list, and repair notes.</p></div>
-  <div class="top-actions"><span class="version-badge">v6.1.0</span><button class="icon-button" id="backupButton" type="button" aria-label="Backup and restore">⋯</button></div>
-</header>
+<header><div><h1>Javi Trailer Helper</h1><p>Trailer info and daily work list</p></div><span class="version">v7.0.0</span></header>
 <main>
-  <section class="stats"><div class="stat"><span id="trailerCount">0</span><small>Trailers</small></div><div class="stat"><span id="todayCount">0</span><small>Done today</small></div><div class="stat"><span id="openCount">0</span><small>Open</small></div></section>
-  <nav class="tabs">
-    <button class="tab active" data-view="trailersView">Trailers</button>
-    <button class="tab" data-view="scanView">Scan Photos</button>
-    <button class="tab" data-view="workView">Work List</button>
-    <button class="tab" data-view="notesView">Notes</button>
-  </nav>
-
-  <section id="trailersView" class="view active">
-    <div class="toolbar"><input id="searchInput" type="search" placeholder="Search trailer or last 6 VIN"><button class="primary" id="addTrailerButton">Add Trailer</button></div>
-    <div id="trailerList" class="stack"></div><div id="emptyTrailers" class="empty hidden">No trailers found.</div>
-  </section>
-
-  <section id="scanView" class="view">
-    <div class="card">
-      <h2>Build Trailer From Photos</h2>
-      <p class="hint">Select multiple clear photos. Use Quick Scan on the phone, or Analyze with AI after your private AI connection is configured. Review everything before saving.</p>
-      <label>Trailer number (recommended)<input id="scanTrailerNumber" autocapitalize="characters" placeholder="HV2304865"></label>
-      <label class="primary file-label full">Choose Photos<input id="scanFiles" type="file" accept="image/*" multiple></label>
-      <div id="photoPreview" class="photo-grid"></div>
-      <div class="button-row full"><button class="secondary" id="scanButton" disabled>Quick Scan</button><button class="primary" id="aiScanButton" disabled>Analyze with AI</button><button class="secondary hidden" id="cancelScanButton" type="button">Cancel Scan</button></div>
-      <div id="scanProgress" class="progress hidden"><div id="scanProgressBar"></div></div>
-      <p id="scanStatus" class="hint"></p><div id="scanLog" class="scan-log hidden"></div>
-    </div>
-    <div id="scanResultsCard" class="card hidden">
-      <h2>Review Extracted Information</h2>
-      <div id="scanResults" class="form-grid"></div>
-      <label>Unmatched text<textarea id="scanRawText" rows="7"></textarea></label>
-      <div class="button-row"><button class="secondary" id="clearScanButton">Clear</button><button class="primary" id="saveScanButton">Save Trailer</button></div>
-    </div>
-  </section>
-
-  <section id="workView" class="view">
-    <div class="card"><h2>Today’s Work List</h2><p class="hint">Paste one trailer per line. Extra list details are ignored.</p><textarea id="workPaste" rows="7" placeholder="HV2304865
-GV2502231
-V522539"></textarea><div class="button-row"><button class="primary" id="addWorkButton">Add to List</button><button class="secondary" id="clearCompletedButton">Remove Completed</button></div></div>
-    <div id="workList" class="stack"></div><div id="emptyWork" class="empty hidden">Your work list is empty.</div>
-  </section>
-
-  <section id="notesView" class="view">
-    <div class="card"><h2>Repair Note Generator</h2>
-      <label>Case number<input id="noteCase" inputmode="numeric" placeholder="00138383"></label>
-      <label>Component<select id="noteComponent"></select></label>
-      <label>Repair performed<select id="noteAction"><option value="noIssues">No issues found</option><option value="replaced">Replaced not-working sensor</option><option value="missing">Replaced missing sensor</option><option value="repairedApp">Repaired on PCT app</option><option value="rewired">Rewired sensor</option><option value="verified">Health check / verified</option><option value="valve">Regulator valve turned back on</option><option value="custom">Custom note</option></select></label>
-      <label id="customNoteWrap" class="hidden">Custom note<textarea id="customNote" rows="4"></textarea></label>
-      <label class="check"><input id="smart7Reason" type="checkbox"> Needed after replacing damaged Smart 7 box</label>
-      <label class="check"><input id="verifySerial" type="checkbox"> Include serial number verification</label>
-      <button class="primary full" id="generateNoteButton">Generate Note</button>
-    </div>
-    <div class="card"><h2>Generated Note</h2><textarea id="generatedNote" rows="7" readonly></textarea><button class="secondary full" id="copyNoteButton">Copy Note</button></div>
-  </section>
+<section class="stats"><div><b id="totalCount">0</b><small>Trailers</small></div><div><b id="doneCount">0</b><small>Completed</small></div><div><b id="openCount">0</b><small>Open</small></div></section>
+<nav><button class="tab active" data-view="trailers">Trailers</button><button class="tab" data-view="work">Work List</button></nav>
+<section id="trailers" class="view active">
+<input id="search" placeholder="Search trailer or last 6 VIN">
+<button id="addTrailer" class="primary full">Add Trailer</button>
+<div id="trailerList"></div><p id="noTrailers" class="empty">No trailers found.</p>
+</section>
+<section id="work" class="view">
+<div class="card"><h2>Add Work Item</h2><label>Trailer number<input id="workTrailer" autocapitalize="characters"></label><p class="hint">Select only the sensors on your work list. You can add another sensor later if you find an issue.</p><div id="workSensorPicker" class="checks"></div><button id="addWork" class="primary full">Add to Work List</button></div>
+<div id="workList"></div><p id="noWork" class="empty">Work list is empty.</p>
+</section>
 </main>
-<footer class="app-footer">Javi Trailer Helper · Version 6.1.0 · July 22, 2026</footer>
+<footer>Javi Trailer Helper · v7.0.0</footer>
 
-<dialog id="trailerDialog"><form id="trailerForm" method="dialog"><div class="dialog-head"><h2 id="dialogTitle">Add Trailer</h2><button class="icon-button" id="closeDialogButton" type="button">×</button></div><input id="editId" type="hidden">
-<div class="paste-panel">
-  <h3>Paste Trailer Information</h3>
-  <p class="hint">Paste the list I send you, then tap Auto Fill Fields.</p>
-  <textarea id="trailerPaste" rows="9" placeholder="Trailer number: HV2304865
-VIN: 1UYVS2537P1234567
-IMEI: 866961063299610
-MAC: CA:45:9B:67:D0:B5
-LFO: 12345678"></textarea>
-  <div class="button-row"><button class="secondary" id="clearTrailerPasteButton" type="button">Clear Paste</button><button class="primary" id="autoFillTrailerButton" type="button">Auto Fill Fields</button></div>
-  <p id="pasteStatus" class="hint"></p>
-</div>
-<div class="form-grid"><label>Trailer number<input id="trailerNumber" required autocapitalize="characters"></label><label>Full VIN<input id="vin" maxlength="17" autocapitalize="characters"></label><label>Last 6 VIN<input id="vinLast6" maxlength="6" autocapitalize="characters"></label><label>IMEI<input id="imei" inputmode="numeric"></label><label>ICCID<input id="iccid" inputmode="numeric"></label><label>MAC address<input id="mac" autocapitalize="characters"></label><label>Case number<input id="caseNumber" inputmode="numeric"></label></div><h3>Trailer Sensors</h3><div id="sensorInputs" class="form-grid"></div><label>Notes<textarea id="trailerNotes" rows="3"></textarea></label><div class="button-row sticky-actions"><button class="danger hidden" id="deleteTrailerButton" type="button">Delete</button><button class="primary" type="submit">Save Trailer</button></div></form></dialog>
-
-<dialog id="backupDialog"><div class="dialog-head"><h2>Backup & Restore</h2><button class="icon-button" id="closeBackupButton">×</button></div><p class="hint">Export regularly. App data is stored on this device.</p><div class="button-row vertical-mobile"><button class="primary" id="exportButton">Export Backup</button><label class="secondary file-label">Import Backup<input id="importFile" type="file" accept="application/json"></label></div><hr><h3>AI Photo Analysis</h3><p class="hint">Enter the private backend address after it is deployed. Never enter an OpenAI API key here.</p><label>AI backend URL<input id="aiBackendUrl" type="url" placeholder="https://your-worker.workers.dev"></label><div class="button-row"><button class="secondary" id="saveAiSettingsButton">Save AI Address</button><button class="secondary" id="testAiButton">Test AI Connection</button></div><p id="aiSettingsStatus" class="hint"></p><button class="secondary full" id="refreshAppButton">Refresh App Files</button><button class="danger full" id="resetButton">Erase All App Data</button></dialog>
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="app.js"></script>
-</body></html>
+<dialog id="trailerDialog"><form id="trailerForm"><div class="dialogHead"><h2 id="dialogTitle">Add Trailer</h2><button type="button" id="closeDialog">×</button></div><input type="hidden" id="editId">
+<div class="pasteBox"><h3>Paste From ChatGPT</h3><textarea id="pasteData" rows="14" placeholder="Trailer ID\n\nVIN: 123456\nIMEI:\n\nDoor:\nCamera:\nATIS:\nRegulator:\nAir Tank:\n\nLFO:\nLFI:\nRFI:\nRFO:\nLRO:\nLRI:\nRRI:\nRRO:"></textarea><button type="button" id="autoFill" class="secondary full">Auto Fill</button></div>
+<label>Trailer ID<input id="trailerId" required autocapitalize="characters"></label>
+<label>VIN — last 6 only<input id="vin6" maxlength="6" autocapitalize="characters"></label>
+<label>IMEI<input id="imei" inputmode="numeric"></label>
+<h3>Sensors</h3><div id="sensorInputs"></div>
+<label class="statusLabel">Status<select id="status"><option value="open">Open</option><option value="completed">Completed</option></select></label>
+<div class="actions"><button type="button" id="deleteTrailer" class="danger">Delete</button><button type="submit" class="primary">Save Trailer</button></div>
+</form></dialog>
+<div id="toast"></div><script src="app.js"></script></body></html>
