@@ -1,5 +1,5 @@
 "use strict";
-const VERSION="9.5.0", KEY="javiTrailerHelperDataV9", DAILY_GOAL=540;
+const VERSION="9.7.0", KEY="javiTrailerHelperDataV9", DAILY_GOAL=540;
 const DEFAULT_NOTES=[
 {id:"noIssues",title:"No issues found",text:"No issues found with {sensor}. Triggered the sensor and verified it was reporting correctly on the PCT app."},
 {id:"replaced",title:"Sensor replaced",text:"{sensor} was not working on the PCT app. Replaced it with a new sensor and verified the new sensor was reporting correctly on the PCT app."},
@@ -9,7 +9,7 @@ const DEFAULT_NOTES=[
 {id:"noPressure",title:"No air pressure",text:"Unable to fully verify {sensor} because the trailer had no air pressure. Checked the sensor and connection, but final verification will be needed once air pressure is available."},
 {id:"unable",title:"Unable to complete",text:"Unable to complete {sensor} at this time because [enter reason]."}
 ];
-const FIELDS=[["door","Door"],["camera","Camera"],["atis","ATIS"],["regulator","Regulator"],["tank","Air Tank"],["lfo","LFO"],["lfi","LFI"],["rfi","RFI"],["rfo","RFO"],["lro","LRO"],["lri","LRI"],["rri","RRI"],["rro","RRO"]];
+const FIELDS=[["door","Door"],["camera","Camera"],["receiver","Receiver"],["atis","ATIS"],["regulator","Regulator"],["tank","Air Tank"],["gateway","Gateway (StealthNet)"],["lfo","LFO"],["lfi","LFI"],["rfi","RFI"],["rfo","RFO"],["lro","LRO"],["lri","LRI"],["rri","RRI"],["rro","RRO"]];
 const SERVICES=[
 ["lfi","LFI",15],["lfo","LFO",15],["lri","LRI",15],["lro","LRO",15],["rfi","RFI",15],["rfo","RFO",15],["rri","RRI",15],["rro","RRO",15],
 ["tpmsReceiver","TPMS Receiver",60],["atis","ATIS",30],["regulator","Regulator",30],["lampCheck","Lamp Check",30],["cargoCamera","Cargo Camera",30],["cargoSensor","Cargo Sensor",30],["tank","Air Tank Sensor",15],["door","Door Sensor",30],["smart7","Smart7",90],["stealthNet","StealthNet",90]
@@ -53,17 +53,49 @@ function todayTotal(){
     return sum+(Number(t.totalMinutes)||0);
   },0)
 }
-function renderDailyGoal(){const total=todayTotal(),remaining=Math.max(DAILY_GOAL-total,0),over=Math.max(total-DAILY_GOAL,0),percent=Math.round((total/DAILY_GOAL)*100);$("todayMinutes").textContent=total;$("goalPercent").textContent=percent+"%";$("goalProgress").style.width=Math.min(percent,100)+"%";$("dailyGoal").classList.toggle("goalReached",total>=DAILY_GOAL);$("dailyGoal").classList.toggle("goalWarning",total>=480&&total<DAILY_GOAL);$("goalMessage").textContent=over?`${over} mins over today’s goal`:remaining?`${remaining} mins remaining`:"Daily goal reached"}
+function renderDailyGoal(previewTotal=null){const total=previewTotal===null?todayTotal():Number(previewTotal)||0,remaining=Math.max(DAILY_GOAL-total,0),over=Math.max(total-DAILY_GOAL,0),percent=Math.round((total/DAILY_GOAL)*100);$("todayMinutes").textContent=total;$("goalPercent").textContent=percent+"%";$("goalProgress").style.width=Math.min(percent,100)+"%";$("dailyGoal").classList.toggle("goalReached",total>=DAILY_GOAL);$("dailyGoal").classList.toggle("goalWarning",total>=480&&total<DAILY_GOAL);$("goalMessage").textContent=over?`${over} mins over today’s goal`:remaining?`${remaining} mins remaining`:"Daily goal reached"}
 function render(){const q=$("search").value.trim().toUpperCase();const trailers=[...state.trailers].filter(t=>!q||t.number.includes(q)||t.vin6.includes(q)).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));$("trailerList").innerHTML=trailers.map(t=>`<article class="trailerCard"><div class="trailerTop"><div><button class="titleCopy" data-copy="${esc(t.number)}" data-label="Trailer">${esc(t.number)}</button><p class="meta">VIN ${esc(t.vin6||"")}</p></div><span class="badge ${t.status}">${t.status==="completed"?"Completed":"Open"}</span></div>${fieldHtml("VIN",t.vin6)}${fieldHtml("IMEI",t.imei)}${FIELDS.map(([k,l])=>sensorFieldHtml(t,k,l,t.sensors[k])).join("")}${completionHtml(t)}<div class="cardActions"><button class="secondary" data-edit="${t.id}">Edit Info</button><button class="primary" data-complete="${t.id}">${t.status==="completed"?"Edit Completion":"Complete Trailer"}</button></div></article>`).join("");$("noTrailers").classList.toggle("hidden",trailers.length>0);
 $("totalCount").textContent=state.trailers.length;$("doneCount").textContent=state.trailers.filter(t=>t.status==="completed").length;$("openCount").textContent=state.trailers.filter(t=>t.status!=="completed").length;renderDailyGoal()}
 function labelFor(k){return (FIELDS.find(x=>x[0]===k)||[k,k])[1]}
 function serviceLabel(id){return (SERVICES.find(x=>x[0]===id)||[])[1]||""}
 function setup(){$("sensorInputs").innerHTML=FIELDS.map(([k,l])=>`<label>${l}<input id="s_${k}" autocapitalize="characters"></label>`).join("");$("servicePicker").innerHTML=SERVICES.map(([id,label,mins])=>`<label class="serviceItem"><input type="checkbox" value="${id}" data-mins="${mins}"><span><b>${label}</b><small>${formatMinutes(mins)}</small></span></label>`).join("")}
 function openDialog(id){const t=state.trailers.find(x=>x.id===id)||migrateTrailer({id:uid(),createdAt:Date.now()});$("dialogTitle").textContent=id?"Edit Trailer":"Add Trailer";$("editId").value=id||"";$("trailerId").value=t.number;$("vin6").value=t.vin6;$("imei").value=t.imei;FIELDS.forEach(([k])=>$("s_"+k).value=t.sensors[k]||"");$("pasteData").value="";$("deleteTrailer").classList.toggle("hidden",!id);$("trailerDialog").showModal()}
-function parsePaste(raw){const out={sensors:{}};const lines=raw.replace(/\r/g,"").split("\n");let first=lines.find(x=>x.trim()&&!x.includes(":"));if(first)out.number=first.trim().toUpperCase();for(const line of lines){const m=line.match(/^\s*([^:]+):\s*(.*)$/);if(!m)continue;const l=m[1].trim().toUpperCase(),v=m[2].trim();if(l==="VIN")out.vin6=v.slice(-6).toUpperCase();else if(l==="IMEI")out.imei=v;else{const map={"DOOR":"door","CAMERA":"camera","ATIS":"atis","REGULATOR":"regulator","AIR TANK":"tank","TANK":"tank","LFO":"lfo","LFI":"lfi","RFI":"rfi","RFO":"rfo","LRO":"lro","LRI":"lri","RRI":"rri","RRO":"rro"};if(map[l])out.sensors[map[l]]=v}}return out}
+function parsePaste(raw){
+  const out={sensors:{}};
+  const lines=String(raw||"").replace(/\r/g,"").split("\n").map(x=>x.trim()).filter(Boolean);
+  const sensorMap={"DOOR":"door","CAMERA":"camera","RECEIVER":"receiver","TPMS RECEIVER":"receiver","ATIS":"atis","ATIS LAMP":"atis","REGULATOR":"regulator","ATIS REGULATOR":"regulator","AIR TANK":"tank","TANK":"tank","GATEWAY":"gateway","GATEWAY STEALTHNET":"gateway","STEALTHNET":"gateway","SMART7":"gateway","SMART 7":"gateway","LFO":"lfo","LFI":"lfi","RFI":"rfi","RFO":"rfo","LRO":"lro","LRI":"lri","RRI":"rri","RRO":"rro"};
+  const cleanLabel=s=>String(s||"").toUpperCase().replace(/[()_-]+/g," ").replace(/\s+/g," ").trim();
+  let pendingSensor="";
+  for(const line of lines){
+    const m=line.match(/^\s*([^:]+):\s*(.*)$/);
+    if(m){
+      const label=cleanLabel(m[1]), value=m[2].trim();
+      if(["TRAILER","TRAILER ID","ASSET","ASSET ID"].includes(label)){out.number=value.toUpperCase();pendingSensor="";continue}
+      if(["VIN","LAST 6 VIN","VIN LAST 6"].includes(label)){out.vin6=value.replace(/\s/g,"").slice(-6).toUpperCase();pendingSensor="";continue}
+      if(label==="IMEI"){out.imei=value.replace(/\s/g,"");pendingSensor="";continue}
+      if(label==="SN"&&pendingSensor){out.sensors[pendingSensor]=value||"NA";pendingSensor="";continue}
+      const key=sensorMap[label]||(label.startsWith("GATEWAY")?"gateway":"");
+      if(key){out.sensors[key]=value||"NA";pendingSensor="";continue}
+    }
+    const label=cleanLabel(line);
+    const key=sensorMap[label]||(label.startsWith("GATEWAY")?"gateway":"");
+    if(key){pendingSensor=key;continue}
+    if(!out.number&&/^[A-Z]{0,3}\d{3,}$/i.test(line)){out.number=line.toUpperCase();continue}
+  }
+  return out
+}
 function recommendedServices(t){const ids=[];for(const [k] of FIELDS){if(!t.sensors[k])continue;if(k==="camera")ids.push("cargoCamera");else ids.push(k)}return ids}
 function openComplete(id){const t=state.trailers.find(x=>x.id===id);if(!t)return;$("completeId").value=id;$("completeTrailerNumber").textContent=t.number;const selected=t.services.length?t.services:recommendedServices(t);$("servicePicker").querySelectorAll("input").forEach(x=>x.checked=selected.includes(x.value));$("reopenTrailer").classList.toggle("hidden",t.status!=="completed");updateTime();$("completeDialog").showModal()}
-function updateTime(){const total=[...$("servicePicker").querySelectorAll("input:checked")].reduce((n,x)=>n+Number(x.dataset.mins),0);$("timeTotal").textContent=formatMinutes(total)}
+function updateTime(){
+  const selectedTotal=[...$("servicePicker").querySelectorAll("input:checked")].reduce((n,x)=>n+Number(x.dataset.mins),0);
+  $("timeTotal").textContent=formatMinutes(selectedTotal);
+  const current=state.trailers.find(x=>x.id===$("completeId").value);
+  let base=todayTotal();
+  if(current&&current.status==="completed"&&(current.completedDate||localDateKey(completionTime(current)))===localDateKey())base-=Number(current.totalMinutes)||0;
+  const liveTotal=Math.max(0,base)+selectedTotal;
+  if($("todayPreview"))$("todayPreview").textContent=`Today with this trailer: ${liveTotal} / ${DAILY_GOAL} mins`;
+  renderDailyGoal(liveTotal);
+}
 $("autoFill").onclick=()=>{const d=parsePaste($("pasteData").value);if(d.number)$("trailerId").value=d.number;if(d.vin6)$("vin6").value=d.vin6;if(d.imei)$("imei").value=d.imei;FIELDS.forEach(([k])=>{if(d.sensors[k]!==undefined)$("s_"+k).value=d.sensors[k]});toast("Fields filled")};
 $("trailerForm").onsubmit=e=>{e.preventDefault();const number=$("trailerId").value.trim().toUpperCase();if(!number)return;const id=$("editId").value||uid();const old=state.trailers.find(t=>t.id===id);const t={id,number,vin6:$("vin6").value.trim().slice(-6).toUpperCase(),imei:$("imei").value.trim(),status:old?.status||"open",createdAt:old?.createdAt||Date.now(),updatedAt:Date.now(),completedAt:old?.completedAt||null,completedDate:old?.completedDate||"",services:old?.services||[],totalMinutes:old?.totalMinutes||0,sensors:Object.fromEntries(FIELDS.map(([k])=>[k,$("s_"+k).value.trim()]))};const i=state.trailers.findIndex(x=>x.id===id);if(i>=0)state.trailers[i]=t;else state.trailers.unshift(t);$("trailerDialog").close();save();toast("Trailer saved")};
 $("completeForm").onsubmit=e=>{e.preventDefault();const t=state.trailers.find(x=>x.id===$("completeId").value);if(!t)return;const wasCompleted=t.status==="completed";const checked=[...$("servicePicker").querySelectorAll("input:checked")];t.services=checked.map(x=>x.value);t.totalMinutes=checked.reduce((n,x)=>n+Number(x.dataset.mins),0);t.status="completed";t.completedAt=wasCompleted&&Number.isFinite(timestampMs(t.completedAt))?timestampMs(t.completedAt):Date.now();t.completedDate=localDateKey(t.completedAt);t.updatedAt=Date.now();$("completeDialog").close();save();const total=todayTotal();toast(total>=DAILY_GOAL?`Daily goal reached: ${total} mins`:`${total} / ${DAILY_GOAL} mins today`)};
@@ -90,5 +122,5 @@ $("notesForm").onsubmit=e=>{e.preventDefault();saveNotesFromEditor()};
 $("addNote").onclick=()=>{state.notes.push({id:uid(),title:"New Note",text:"{sensor} "});renderNotesEditor();setTimeout(()=>{const cards=$("notesEditor").querySelectorAll(".noteEditCard");cards[cards.length-1]?.scrollIntoView({behavior:"smooth"})},0)};
 $("resetNotes").onclick=()=>{if(confirm("Reset all common notes to the detailed defaults?")){state.notes=DEFAULT_NOTES.map(n=>({...n}));renderNotesEditor()}};
 $("deleteTrailer").onclick=()=>{const id=$("editId").value;if(confirm("Delete this trailer?")){state.trailers=state.trailers.filter(t=>t.id!==id);$("trailerDialog").close();save()}};
-$("addTrailer").onclick=()=>openDialog();$("closeDialog").onclick=()=>$("trailerDialog").close();$("closeComplete").onclick=()=>$("completeDialog").close();$("search").oninput=render;
+$("addTrailer").onclick=()=>openDialog();$("closeDialog").onclick=()=>$("trailerDialog").close();$("closeComplete").onclick=()=>{$("completeDialog").close();renderDailyGoal()};$("completeDialog").addEventListener("cancel",()=>setTimeout(renderDailyGoal,0));$("search").oninput=render;
 setup();render();if("serviceWorker" in navigator)navigator.serviceWorker.register("service-worker.js");
