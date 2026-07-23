@@ -1,3 +1,7 @@
-Javi Trailer Helper v9.3.0
+Javi Trailer Helper v9.4.0
 
-Update: Removed the Work List feature. All trailer information, completion tracking, and the 540-minute daily goal remain unchanged.
+Update:
+- Shows repair minutes next to every sensor.
+- Adds a Remove button for each sensor.
+- Removing a sensor automatically removes its repair time from the trailer total and daily dashboard.
+- Work List remains removed.
