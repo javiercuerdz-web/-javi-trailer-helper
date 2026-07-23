@@ -16,7 +16,7 @@
 <body>
 <header class="topbar">
   <div><h1>Javi Trailer Helper</h1><p>Trailer data, photo scan, work list, and repair notes.</p></div>
-  <button class="icon-button" id="backupButton" type="button" aria-label="Backup and restore">⋯</button>
+  <div class="top-actions"><span class="version-badge">v5.0.0</span><button class="icon-button" id="backupButton" type="button" aria-label="Backup and restore">⋯</button></div>
 </header>
 <main>
   <section class="stats"><div class="stat"><span id="trailerCount">0</span><small>Trailers</small></div><div class="stat"><span id="todayCount">0</span><small>Done today</small></div><div class="stat"><span id="openCount">0</span><small>Open</small></div></section>
@@ -39,9 +39,9 @@
       <label>Trailer number (recommended)<input id="scanTrailerNumber" autocapitalize="characters" placeholder="HV2304865"></label>
       <label class="primary file-label full">Choose Photos<input id="scanFiles" type="file" accept="image/*" multiple></label>
       <div id="photoPreview" class="photo-grid"></div>
-      <button class="primary full" id="scanButton" disabled>Scan Selected Photos</button>
+      <div class="button-row full"><button class="primary" id="scanButton" disabled>Scan Selected Photos</button><button class="secondary hidden" id="cancelScanButton" type="button">Cancel Scan</button></div>
       <div id="scanProgress" class="progress hidden"><div id="scanProgressBar"></div></div>
-      <p id="scanStatus" class="hint"></p>
+      <p id="scanStatus" class="hint"></p><div id="scanLog" class="scan-log hidden"></div>
     </div>
     <div id="scanResultsCard" class="card hidden">
       <h2>Review Extracted Information</h2>
@@ -71,10 +71,11 @@ V522539"></textarea><div class="button-row"><button class="primary" id="addWorkB
     <div class="card"><h2>Generated Note</h2><textarea id="generatedNote" rows="7" readonly></textarea><button class="secondary full" id="copyNoteButton">Copy Note</button></div>
   </section>
 </main>
+<footer class="app-footer">Javi Trailer Helper · Version 4.0.0 · July 22, 2026</footer>
 
 <dialog id="trailerDialog"><form id="trailerForm" method="dialog"><div class="dialog-head"><h2 id="dialogTitle">Add Trailer</h2><button class="icon-button" id="closeDialogButton" type="button">×</button></div><input id="editId" type="hidden"><div class="form-grid"><label>Trailer number<input id="trailerNumber" required autocapitalize="characters"></label><label>Last 6 VIN<input id="vinLast6" maxlength="6" autocapitalize="characters"></label><label>IMEI<input id="imei" inputmode="numeric"></label><label>ICCID<input id="iccid" inputmode="numeric"></label><label>MAC address<input id="mac" autocapitalize="characters"></label><label>Case number<input id="caseNumber" inputmode="numeric"></label></div><h3>Trailer Sensors</h3><div id="sensorInputs" class="form-grid"></div><label>Notes<textarea id="trailerNotes" rows="3"></textarea></label><div class="button-row sticky-actions"><button class="danger hidden" id="deleteTrailerButton" type="button">Delete</button><button class="primary" type="submit">Save Trailer</button></div></form></dialog>
 
-<dialog id="backupDialog"><div class="dialog-head"><h2>Backup & Restore</h2><button class="icon-button" id="closeBackupButton">×</button></div><p class="hint">Export regularly. App data is stored on this device.</p><div class="button-row vertical-mobile"><button class="primary" id="exportButton">Export Backup</button><label class="secondary file-label">Import Backup<input id="importFile" type="file" accept="application/json"></label></div><button class="danger full" id="resetButton">Erase All App Data</button></dialog>
+<dialog id="backupDialog"><div class="dialog-head"><h2>Backup & Restore</h2><button class="icon-button" id="closeBackupButton">×</button></div><p class="hint">Export regularly. App data is stored on this device.</p><div class="button-row vertical-mobile"><button class="primary" id="exportButton">Export Backup</button><label class="secondary file-label">Import Backup<input id="importFile" type="file" accept="application/json"></label></div><button class="secondary full" id="refreshAppButton">Refresh App Files</button><button class="danger full" id="resetButton">Erase All App Data</button></dialog>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script src="app.js"></script>
 </body></html>
