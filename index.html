@@ -16,7 +16,7 @@
 <body>
 <header class="topbar">
   <div><h1>Javi Trailer Helper</h1><p>Trailer data, photo scan, work list, and repair notes.</p></div>
-  <div class="top-actions"><span class="version-badge">v5.0.0</span><button class="icon-button" id="backupButton" type="button" aria-label="Backup and restore">⋯</button></div>
+  <div class="top-actions"><span class="version-badge">v6.1.0</span><button class="icon-button" id="backupButton" type="button" aria-label="Backup and restore">⋯</button></div>
 </header>
 <main>
   <section class="stats"><div class="stat"><span id="trailerCount">0</span><small>Trailers</small></div><div class="stat"><span id="todayCount">0</span><small>Done today</small></div><div class="stat"><span id="openCount">0</span><small>Open</small></div></section>
@@ -35,11 +35,11 @@
   <section id="scanView" class="view">
     <div class="card">
       <h2>Build Trailer From Photos</h2>
-      <p class="hint">Select multiple clear photos. The app reads visible labels and combines the information. Review everything before saving.</p>
+      <p class="hint">Select multiple clear photos. Use Quick Scan on the phone, or Analyze with AI after your private AI connection is configured. Review everything before saving.</p>
       <label>Trailer number (recommended)<input id="scanTrailerNumber" autocapitalize="characters" placeholder="HV2304865"></label>
       <label class="primary file-label full">Choose Photos<input id="scanFiles" type="file" accept="image/*" multiple></label>
       <div id="photoPreview" class="photo-grid"></div>
-      <div class="button-row full"><button class="primary" id="scanButton" disabled>Scan Selected Photos</button><button class="secondary hidden" id="cancelScanButton" type="button">Cancel Scan</button></div>
+      <div class="button-row full"><button class="secondary" id="scanButton" disabled>Quick Scan</button><button class="primary" id="aiScanButton" disabled>Analyze with AI</button><button class="secondary hidden" id="cancelScanButton" type="button">Cancel Scan</button></div>
       <div id="scanProgress" class="progress hidden"><div id="scanProgressBar"></div></div>
       <p id="scanStatus" class="hint"></p><div id="scanLog" class="scan-log hidden"></div>
     </div>
@@ -71,11 +71,23 @@ V522539"></textarea><div class="button-row"><button class="primary" id="addWorkB
     <div class="card"><h2>Generated Note</h2><textarea id="generatedNote" rows="7" readonly></textarea><button class="secondary full" id="copyNoteButton">Copy Note</button></div>
   </section>
 </main>
-<footer class="app-footer">Javi Trailer Helper · Version 4.0.0 · July 22, 2026</footer>
+<footer class="app-footer">Javi Trailer Helper · Version 6.1.0 · July 22, 2026</footer>
 
-<dialog id="trailerDialog"><form id="trailerForm" method="dialog"><div class="dialog-head"><h2 id="dialogTitle">Add Trailer</h2><button class="icon-button" id="closeDialogButton" type="button">×</button></div><input id="editId" type="hidden"><div class="form-grid"><label>Trailer number<input id="trailerNumber" required autocapitalize="characters"></label><label>Last 6 VIN<input id="vinLast6" maxlength="6" autocapitalize="characters"></label><label>IMEI<input id="imei" inputmode="numeric"></label><label>ICCID<input id="iccid" inputmode="numeric"></label><label>MAC address<input id="mac" autocapitalize="characters"></label><label>Case number<input id="caseNumber" inputmode="numeric"></label></div><h3>Trailer Sensors</h3><div id="sensorInputs" class="form-grid"></div><label>Notes<textarea id="trailerNotes" rows="3"></textarea></label><div class="button-row sticky-actions"><button class="danger hidden" id="deleteTrailerButton" type="button">Delete</button><button class="primary" type="submit">Save Trailer</button></div></form></dialog>
+<dialog id="trailerDialog"><form id="trailerForm" method="dialog"><div class="dialog-head"><h2 id="dialogTitle">Add Trailer</h2><button class="icon-button" id="closeDialogButton" type="button">×</button></div><input id="editId" type="hidden">
+<div class="paste-panel">
+  <h3>Paste Trailer Information</h3>
+  <p class="hint">Paste the list I send you, then tap Auto Fill Fields.</p>
+  <textarea id="trailerPaste" rows="9" placeholder="Trailer number: HV2304865
+VIN: 1UYVS2537P1234567
+IMEI: 866961063299610
+MAC: CA:45:9B:67:D0:B5
+LFO: 12345678"></textarea>
+  <div class="button-row"><button class="secondary" id="clearTrailerPasteButton" type="button">Clear Paste</button><button class="primary" id="autoFillTrailerButton" type="button">Auto Fill Fields</button></div>
+  <p id="pasteStatus" class="hint"></p>
+</div>
+<div class="form-grid"><label>Trailer number<input id="trailerNumber" required autocapitalize="characters"></label><label>Full VIN<input id="vin" maxlength="17" autocapitalize="characters"></label><label>Last 6 VIN<input id="vinLast6" maxlength="6" autocapitalize="characters"></label><label>IMEI<input id="imei" inputmode="numeric"></label><label>ICCID<input id="iccid" inputmode="numeric"></label><label>MAC address<input id="mac" autocapitalize="characters"></label><label>Case number<input id="caseNumber" inputmode="numeric"></label></div><h3>Trailer Sensors</h3><div id="sensorInputs" class="form-grid"></div><label>Notes<textarea id="trailerNotes" rows="3"></textarea></label><div class="button-row sticky-actions"><button class="danger hidden" id="deleteTrailerButton" type="button">Delete</button><button class="primary" type="submit">Save Trailer</button></div></form></dialog>
 
-<dialog id="backupDialog"><div class="dialog-head"><h2>Backup & Restore</h2><button class="icon-button" id="closeBackupButton">×</button></div><p class="hint">Export regularly. App data is stored on this device.</p><div class="button-row vertical-mobile"><button class="primary" id="exportButton">Export Backup</button><label class="secondary file-label">Import Backup<input id="importFile" type="file" accept="application/json"></label></div><button class="secondary full" id="refreshAppButton">Refresh App Files</button><button class="danger full" id="resetButton">Erase All App Data</button></dialog>
+<dialog id="backupDialog"><div class="dialog-head"><h2>Backup & Restore</h2><button class="icon-button" id="closeBackupButton">×</button></div><p class="hint">Export regularly. App data is stored on this device.</p><div class="button-row vertical-mobile"><button class="primary" id="exportButton">Export Backup</button><label class="secondary file-label">Import Backup<input id="importFile" type="file" accept="application/json"></label></div><hr><h3>AI Photo Analysis</h3><p class="hint">Enter the private backend address after it is deployed. Never enter an OpenAI API key here.</p><label>AI backend URL<input id="aiBackendUrl" type="url" placeholder="https://your-worker.workers.dev"></label><div class="button-row"><button class="secondary" id="saveAiSettingsButton">Save AI Address</button><button class="secondary" id="testAiButton">Test AI Connection</button></div><p id="aiSettingsStatus" class="hint"></p><button class="secondary full" id="refreshAppButton">Refresh App Files</button><button class="danger full" id="resetButton">Erase All App Data</button></dialog>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script src="app.js"></script>
 </body></html>

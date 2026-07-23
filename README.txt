@@ -1,16 +1,17 @@
-Javi Trailer Helper v4.0.0
+Javi Trailer Helper v6.1.0
 
-Upload every file in this folder to the root of the GitHub repository.
+New: Paste Trailer Information inside Add Trailer. Paste a labeled list and tap Auto Fill Fields.
 
-Included:
-- Trailer database and search by trailer number or last 6 VIN
-- IMEI, ICCID, MAC, case number, device and tire sensor fields
-- One-tap copy
-- Multi-photo OCR scan with review before saving
-- Daily work list and completed count
-- Repair note generator
-- Local backup and restore
-- Offline Home Screen app
-- Visible version number and refresh control
+Javi Trailer Helper v6.0.0
 
-Photo scanning reads visible printed text using Tesseract.js. It requires internet the first time the scanner is loaded and all extracted values must be reviewed before saving.
+Upload the normal app files to the root of the GitHub Pages repository.
+Do not upload cloudflare-worker.js or wrangler.toml.example to GitHub Pages unless you simply want to keep copies there; they are backend source files.
+
+New in v6:
+- Full 17-character VIN field and automatic last-6 VIN
+- Improved local VIN recognition
+- Analyze with AI button for multi-photo OpenAI vision
+- AI backend address and connection test in the three-dot menu
+- Strict blank-on-uncertain extraction to reduce random words in sensor fields
+
+AI requires the one-time setup in AI-SETUP.txt.

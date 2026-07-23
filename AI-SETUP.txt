@@ -1,0 +1,17 @@
+JAVI TRAILER HELPER V6 - ONE-TIME AI SETUP
+
+The app works immediately with the improved Quick Scan and full VIN support.
+The Analyze with AI button requires a private backend so your OpenAI key is never exposed in GitHub Pages.
+
+Backend files included:
+- cloudflare-worker.js
+- wrangler.toml.example
+
+Setup outline:
+1. Create a Cloudflare account and a Worker.
+2. Paste cloudflare-worker.js into the Worker.
+3. Add a secret named OPENAI_API_KEY in the Worker settings.
+4. Deploy and copy the workers.dev URL.
+5. In the app tap the three-dot menu, paste that URL under AI Photo Analysis, save, and test.
+
+Do not put your OpenAI API key in index.html, app.js, GitHub, or the app settings.
